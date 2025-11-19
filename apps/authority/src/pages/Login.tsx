@@ -14,18 +14,64 @@ const Login = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Mock authentication - in production, this would be a real API call
-    localStorage.setItem('sentinelview_auth', JSON.stringify({
-      user: credentials.username,
-      role: credentials.role,
-      authenticated: true
-    }));
-    setIsAuthenticated(true);
-  };
+  // const handleLogin = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setError('');
 
+  //   try {
+  //     const response = await fetch('/api/v1/auth/login', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify(credentials)
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error('Invalid credentials');
+  //     }
+
+  //     const data = await response.json();
+  //     // Save auth info to localStorage
+  //     localStorage.setItem('sentinelview_auth', JSON.stringify(data));
+  //     setIsAuthenticated(true);
+
+  //   } catch (err: any) {
+  //     setError(err.message || 'Login failed');
+  //   }
+  // };
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+
+  try {
+    const response = await fetch('http://localhost:3000/api/v1/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Login failed');
+    }
+
+    // Save only token + user
+   // localStorage.setItem('sentinelview_auth', JSON.stringify(data.data));
+// Save token separately
+localStorage.setItem("token", data.data.token);
+
+// Save user info separately if you need it
+localStorage.setItem("user", JSON.stringify(data.data.user));
+
+setIsAuthenticated(true);
+    
+
+  } catch (err: any) {
+    setError(err.message || 'Login failed');
+  }
+};
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -33,7 +79,6 @@ const Login = () => {
   return (
     <div className="min-h-screen surface-gradient flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* SentinelView Branding */}
         <div className="text-center">
           <div className="mx-auto w-16 h-16 authority-gradient rounded-full flex items-center justify-center mb-4">
             <Shield className="w-8 h-8 text-white" />
@@ -45,18 +90,18 @@ const Login = () => {
         <Card className="card-shadow">
           <CardHeader>
             <CardTitle>Authority Login</CardTitle>
-            <CardDescription>
-              Secure access to the tourist safety monitoring system
-            </CardDescription>
+            <CardDescription>Secure access to the tourist safety monitoring system</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Username</label>
                 <Input
                   type="text"
                   value={credentials.username}
-                  onChange={(e) => setCredentials({...credentials, username: e.target.value})}
+                  onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
                   placeholder="Enter your username"
                   required
                 />
@@ -68,7 +113,7 @@ const Login = () => {
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     value={credentials.password}
-                    onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+                    onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                     placeholder="Enter your password"
                     required
                   />
@@ -94,7 +139,7 @@ const Login = () => {
                       className={`cursor-pointer capitalize ${
                         credentials.role === role ? 'authority-gradient text-white' : ''
                       }`}
-                      onClick={() => setCredentials({...credentials, role})}
+                      onClick={() => setCredentials({ ...credentials, role })}
                     >
                       {role}
                     </Badge>
@@ -107,12 +152,16 @@ const Login = () => {
               </Button>
             </form>
 
-            {/* Demo Credentials */}
             <div className="mt-6 p-3 bg-muted rounded-md">
               <p className="text-xs text-muted-foreground mb-2">Demo Credentials:</p>
               <p className="text-xs">Username: <span className="font-mono">demo</span></p>
               <p className="text-xs">Password: <span className="font-mono">password</span></p>
             </div>
+             <div className="text-center mt-4">
+          <Button variant="link" onClick={() => window.location.href = "/register"}>
+            If Not Registered ? Register Now
+          </Button>
+        </div>
           </CardContent>
         </Card>
 

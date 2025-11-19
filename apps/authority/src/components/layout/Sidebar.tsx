@@ -22,6 +22,7 @@ const navigation = [
   { name: 'Zone Management', href: '/zones', icon: MapPin },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'AI Assistant', href: '/assistant', icon: MessageSquare },
+  { name: 'EFIR', href: '/efir', icon: MessageSquare },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
@@ -47,24 +48,25 @@ const Sidebar = () => {
           </div>
         </div>
       </div>
-
-      {/* User Info */}
-      <div className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-white text-sm">{user.user || 'Officer'}</p>
-            <Badge 
-              variant="outline" 
-              className="text-xs capitalize mt-1 border-primary text-primary"
-            >
-              {user.role || 'officer'}
-            </Badge>
-          </div>
-          <Button variant="ghost" size="sm" className="text-sidebar-foreground hover:text-white">
-            <Bell className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+{/* User Info */}
+<div className="p-4 border-b border-sidebar-border">
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="font-medium text-white text-sm">
+        {user?.name || 'Officer'}
+      </p>
+      <Badge 
+        variant="outline" 
+        className="text-xs capitalize mt-1 border-primary text-primary"
+      >
+        {user?.role || 'officer'}
+      </Badge>
+    </div>
+    <Button variant="ghost" size="sm" className="text-sidebar-foreground hover:text-white">
+      <Bell className="w-4 h-4" />
+    </Button>
+  </div>
+</div>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">

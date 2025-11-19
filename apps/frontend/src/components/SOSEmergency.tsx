@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { useUserData } from "@/context/UserDataContext";
 import { 
   AlertTriangle, 
   Phone, 
@@ -15,16 +16,27 @@ import {
 } from 'lucide-react';
 
 import { io, Socket } from 'socket.io-client';
-const SOCKET_URL = (import.meta as any).env?.VITE_TOURIST_SOCKET_URL as string || "https://safara-backend.onrender.com";
+const SOCKET_URL = (import.meta as any).env?.VITE_TOURIST_SOCKET_URL as string || "http://localhost:3000";
 
 
 interface SOSEmergencyProps {
   userLocation?: { lat: number; lng: number };
   onCancel: () => void;
   onEscalate: () => void;
+  pid_application_id?: string | null;
+  pid_full_name?: string | null;
+  pid_mobile?: string | null;
+  pid_email?: string | null;
+  pid_personal_id?: string | null;
+  tid?: string | null;
+  tid_status?: string | null;
+  trip?: any;
 }
 
-export default function SOSEmergency({ userLocation, onCancel, onEscalate }: SOSEmergencyProps) {
+export default function SOSEmergency({pid_application_id,pid_full_name,pid_mobile,pid_email,pid_personal_id,tid_status,tid,trip, userLocation, onCancel, onEscalate}: SOSEmergencyProps) {
+  
+
+
   const [description, setDescription] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState(10);
@@ -33,7 +45,19 @@ export default function SOSEmergency({ userLocation, onCancel, onEscalate }: SOS
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+const { personal, tourist } = useUserData();
+  const personalRef = useRef(personal);
+  const touristRef = useRef(tourist);
 
+  // keep refs updated
+  useEffect(() => {
+    personalRef.current = personal;
+    touristRef.current = tourist;
+  }, [personal, tourist]);
+  const p = personalRef.current;
+            const t = touristRef.current;
+            
+console.log(p);
   useEffect(() => {
     if (!SOCKET_URL) return;
     const s = io(SOCKET_URL, { transports: ['websocket','polling'] });
@@ -60,35 +84,81 @@ export default function SOSEmergency({ userLocation, onCancel, onEscalate }: SOS
        : new Promise<string>((res) => { const r = new FileReader(); r.onloadend = () => res(r.result as string); r.readAsDataURL(b); });
 
   // replace handleSubmitDetails with socket emit
+  // const handleSubmitDetails = async () => {
+  //   try {
+  //     const audio = await blobToDataUrl(audioBlob);
+  //     const video = await blobToDataUrl(videoBlob);
+  //     const photo = await blobToDataUrl(photoBlob);
+
+  //     // Pull lightweight identity available in app/session
+  //     const touristId = localStorage.getItem('tourist_id') || undefined;
+  //     const touristName = localStorage.getItem('tourist_name') || undefined;
+  //     const touristPhone = localStorage.getItem('userId') || undefined;
+
+  //     const payload = {
+  //       id: crypto.randomUUID(),
+  //       touristId,
+  //       touristName,
+  //       touristPhone,
+  //       location: userLocation, // {lat,lng}
+  //       description,
+  //       media: { audio, video, photo },
+  //     };
+
+  //     socketRef.current?.emit('sos-create', payload);
+  //     setStage('escalation');
+  //     (window as any).currentEmergencyId = payload.id;
+  //   } catch (e) {
+  //     console.error('❌ SOS emit failed', e);
+  //     alert('Failed to create emergency alert. Please call 112 directly.');
+  //   }
+  // };
   const handleSubmitDetails = async () => {
-    try {
-      const audio = await blobToDataUrl(audioBlob);
-      const video = await blobToDataUrl(videoBlob);
-      const photo = await blobToDataUrl(photoBlob);
+  try {
+    const audio = await blobToDataUrl(audioBlob);
+    const video = await blobToDataUrl(videoBlob);
+    const photo = await blobToDataUrl(photoBlob);
 
-      // Pull lightweight identity available in app/session
-      const touristId = localStorage.getItem('tourist_id') || undefined;
-      const touristName = localStorage.getItem('tourist_name') || undefined;
-      const touristPhone = localStorage.getItem('userId') || undefined;
+    // ✅ Real tourist info from localStorage (if logged in)
+    //const touristId = localStorage.getItem('t_id') || "T-DEMO-001";
+    const pid_full_name = localStorage.getItem('pid_full_name') || "Demo Tourist";
+    const pid_mobile = localStorage.getItem('pid_mobile') || "+911234567890";
 
-      const payload = {
-        id: crypto.randomUUID(),
-        touristId,
+    // ✅ Location fallback for demo
+   const location = userLocation || { lat: userLocation?.lat, lng: userLocation?.lng };
+// Pull lightweight identity available in app/session
+     const touristId = t?.tid || localStorage.getItem("current_tid");
+      const touristName = p?.pid_full_name || "Unknown";
+      const touristPhone =  p?.pid_mobile || "-";
+console.log(t);
+              
+              
+    const payload = {
+      
+      touristId,
         touristName,
         touristPhone,
-        location: userLocation, // {lat,lng}
-        description,
-        media: { audio, video, photo },
-      };
+      
+      location,
+      description: description || "Demo SOS: Need urgent help near Rajwada Palace!",
+      media: { audio, video, photo },
+      isDemo: !localStorage.getItem('t_id'), // 👀 flag to mark demo
+      timestamp: new Date().toISOString(),
+    };
 
-      socketRef.current?.emit('sos-create', payload);
-      setStage('escalation');
-      (window as any).currentEmergencyId = payload.id;
-    } catch (e) {
-      console.error('❌ SOS emit failed', e);
-      alert('Failed to create emergency alert. Please call 112 directly.');
-    }
-  };
+    //console.log("📤 Sending SOS payload:", payload);
+    socketRef.current?.emit('sos-create', payload);
+
+    setStage('escalation');
+    (window as any).currentEmergencyId = payload.id;
+  } catch (e) {
+    console.error('❌ SOS emit failed', e);
+    alert('Failed to create emergency alert. Please call 112 directly.');
+  }
+};
+
+  
+
 
   const handleEscalateToERSS = async () => {
     try {

@@ -47,6 +47,33 @@ export function clearUserPidData(s: Session | null = getSession()) {
     'pid_full_name',
     'pid_mobile',
     'pid_email',
+    
   ];
   keys.forEach(k => localStorage.removeItem(userKey(k, s)));
 }
+
+// -----------------------------
+// Tourist session helpers
+// -----------------------------
+
+// export function setTouristItem(key: string, value: string, s: Session | null = getSession()) {
+//   if (!s) return;
+//   localStorage.setItem(userKey(`tourist_${key}`, s), value);
+// }
+
+// export function getTouristItem(key: string, s: Session | null = getSession()): string | null {
+//   if (!s) return null;
+//   return localStorage.getItem(userKey(`tourist_${key}`, s));
+// }
+
+// export function removeTouristItem(key: string, s: Session | null = getSession()) {
+//   if (!s) return;
+//   localStorage.removeItem(userKey(`tourist_${key}`, s));
+// }
+
+// // Clear all tourist-related data for the session
+// export function clearTouristData(s: Session | null = getSession()) {
+//   if (!s) return;
+//   const keys = ['tid', 'tid_status', 'tid_userId', 'trip_draft'];
+//   keys.forEach(k => localStorage.removeItem(userKey(`tourist_${k}`, s)));
+// }

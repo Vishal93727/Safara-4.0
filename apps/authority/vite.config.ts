@@ -11,11 +11,25 @@ export default defineConfig({
     }
   },
   root: path.resolve(__dirname),
-  server: {
-    port: 5174
-  },
+  
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true
-  }
+  },
+  server: {
+  
+    port: 5174,
+  
+    proxy: {
+    '/api': 'http://localhost:3000'
+  },
+    fs: {
+      strict: true,
+      deny: ["**/.*"],
+    },
+  },
+  
 });
+
+
+  

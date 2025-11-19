@@ -43,15 +43,17 @@ export default function HomeScreen({ userPhone, isGuest = false, onNavigate, onL
   const [showTrips, setShowTrips] = useState(false);
 
 
-  
   useEffect(() => {
-    setPersonalId(getUserItem('pid_personal_id', s));
-    setFullName(getUserItem('pid_full_name', s));
-    setMobile(getUserItem('pid_mobile', s));
-    setEmail(getUserItem('pid_email', s));
-    const d = readTripDraft();
-    if (d.endDate || d.destination || d.itinerary || d.mode) setTripDraft(d);
-  }, [s]);
+  const session = getSession();
+  setPersonalId(getUserItem('pid_personal_id', session));
+  setFullName(getUserItem('pid_full_name', session));
+  setMobile(getUserItem('pid_mobile', session));
+  setEmail(getUserItem('pid_email', session));
+
+  const draft = readTripDraft();
+  if (draft.endDate || draft.destination || draft.itinerary || draft.mode) setTripDraft(draft);
+}, []); // ✅ run only once on mount
+  
 
   useEffect(() => {
     if (isGuest) return;

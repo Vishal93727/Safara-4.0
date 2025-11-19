@@ -20,7 +20,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-    '/api': 'https://safara-backend.onrender.com'
+    '/api': 'http://localhost:3000'
   },
     fs: {
       strict: true,

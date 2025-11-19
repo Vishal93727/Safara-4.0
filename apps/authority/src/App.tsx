@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Tourists from "./pages/Tourists";
 import Incidents from "./pages/Incidents";
 import Zones from "./pages/Zones";
+import EFIR from "./pages/EFIR";
 import Analytics from "./pages/Analytics";
 import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
@@ -33,7 +35,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-                    <Route path="/registration" element={<Registration />} />
+                    <Route path="/register" element={<Registration />} />
 
           <Route path="/" element={
             <ProtectedRoute>
@@ -45,6 +47,8 @@ const App = () => (
             <Route path="tourists" element={<Tourists />} />
             <Route path="incidents" element={<Incidents />} />
             <Route path="zones" element={<Zones />} />
+            <Route path="efir" element={<EFIR />} />
+
             <Route path="analytics" element={<Analytics />} />
             <Route path="assistant" element={<Assistant />} />
             <Route path="settings" element={<Settings />} />
