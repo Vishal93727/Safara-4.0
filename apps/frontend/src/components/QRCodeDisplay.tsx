@@ -450,7 +450,6 @@ export default function QRCodeDisplay({ touristId }: { touristId: TouristIdData 
 
   const issueDate = new Date(touristId.issueDate);
   const validUntil = new Date(touristId.validUntil);
-
   // ✅ Send tourist data continuously via socket
   useEffect(() => {
     // Prepare data to send

@@ -493,7 +493,7 @@ import L, { Map as LeafletMap, Marker, Layer } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useUserData } from "@/context/UserDataContext";
 import { io, Socket } from "socket.io-client";
-
+import { TouristIdRecord,saveTouristIdFromDraft } from '@/lib/touristId';
 const SOCKET_URL = "http://localhost:3000";
 const MAPTILER_KEY = import.meta.env?.VITE_MAPTILER_KEY || "K183PqmMToR2O89INJ40";
 
@@ -507,11 +507,65 @@ L.Icon.Default.mergeOptions({
 
 
 // ⭐⭐⭐ ADDITION A — GLOBAL TRACKER (DO NOT REMOVE YOUR OLD CODE)
+// let globalSocket: Socket | null = null;
+// let globalGeoWatchId: number | null = null;
+
+// function startGlobalLiveTracking(getPersonal: () => any, getTourist: () => any) {
+//   if (globalSocket) return;
+
+//   globalSocket = io(SOCKET_URL, {
+//     transports: ["websocket"],
+//     reconnection: true,
+//     reconnectionAttempts: Infinity,
+//   });
+
+//   globalSocket.on("connect", () => {
+//     const p = getPersonal();
+//     const t = getTourist();
+
+//     globalSocket?.emit("register-tourist", {
+//       touristId: rec?.id || localStorage.getItem("tourist_id"),
+//       personalId: p?.pid_personal_id,
+//       name: p?.pid_full_name || "Unknown",
+//       email: p?.pid_email || "-",
+//       phone: p?.pid_mobile || "-",
+//       nationality: p?.pid_nationality || "Indian",
+//     });
+//   });
+
+//   if ("geolocation" in navigator) {
+//     globalGeoWatchId = navigator.geolocation.watchPosition(
+//       (pos) => {
+//         const p = getPersonal();
+//         const t = getTourist();
+
+//         globalSocket?.emit("live-tourist-data", {
+//           latitude: pos.coords.latitude,
+//           longitude: pos.coords.longitude,
+//           timestamp: new Date().toISOString(),
+//           touristId: rec?.id || localStorage.getItem("tourist_id"),
+//           personalId: p?.pid_personal_id,
+//           name: p?.pid_full_name,
+//           phone: p?.pid_mobile,
+//           email: p?.pid_email || t?.email,
+//           nationality: p?.pid_nationality || "-",
+//           destination: t?.trip?.destination || "-",
+//           tripStart: t?.trip?.startDate || "-",
+//           tripEnd: t?.trip?.endDate || "-",
+//           status: t?.tid_status || "active",
+//         });
+//       },
+//       (err) => console.log("Global geo error:", err),
+//       { enableHighAccuracy: true }
+//     );
+//   }
+// }
+
 let globalSocket: Socket | null = null;
 let globalGeoWatchId: number | null = null;
 
 function startGlobalLiveTracking(getPersonal: () => any, getTourist: () => any) {
-  if (globalSocket) return;
+  if (globalSocket) return; // Prevent duplicate sockets
 
   globalSocket = io(SOCKET_URL, {
     transports: ["websocket"],
@@ -531,6 +585,8 @@ function startGlobalLiveTracking(getPersonal: () => any, getTourist: () => any) 
       phone: p?.pid_mobile || "-",
       nationality: p?.pid_nationality || "Indian",
     });
+
+    console.log("🌍 Global tracking started");
   });
 
   if ("geolocation" in navigator) {
@@ -538,11 +594,12 @@ function startGlobalLiveTracking(getPersonal: () => any, getTourist: () => any) 
       (pos) => {
         const p = getPersonal();
         const t = getTourist();
-
+console.log(t);
         globalSocket?.emit("live-tourist-data", {
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
           timestamp: new Date().toISOString(),
+
           touristId: t?.tid || localStorage.getItem("current_tid"),
           personalId: p?.pid_personal_id,
           name: p?.pid_full_name,
@@ -554,12 +611,15 @@ function startGlobalLiveTracking(getPersonal: () => any, getTourist: () => any) 
           tripEnd: t?.trip?.endDate || "-",
           status: t?.tid_status || "active",
         });
+
+        console.log("📡 location sent:", pos.coords.latitude, pos.coords.longitude);
       },
-      (err) => console.log("Global geo error:", err),
+      (err) => console.log("❌ Global geo error:", err),
       { enableHighAccuracy: true }
     );
   }
 }
+
 
 
 
@@ -590,7 +650,8 @@ export default function MapComponent({ userLocation, onGeofenceAlert, isFullscre
   const { personal, tourist } = useUserData();
   const personalRef = useRef(personal);
   const touristRef = useRef(tourist);
-
+const rec = saveTouristIdFromDraft();
+console.log( rec);
   useEffect(() => {
     personalRef.current = personal;
     touristRef.current = tourist;
@@ -640,7 +701,7 @@ export default function MapComponent({ userLocation, onGeofenceAlert, isFullscre
       const p = personalRef.current;
       const t = touristRef.current;
       socket.emit("register-tourist", {
-        touristId: t?.id || localStorage.getItem("current_tid"),
+        touristId: t?.id || localStorage.getItem("tourist_id"),
         personalId: p?.id,
         name: p?.name || "Unknown",
         email: p?.email || "-",
@@ -808,7 +869,7 @@ function stopZoneAlert(zoneKey: string) {
 
 socket.on("zone-alert", ({ touristId, zoneName, risk }) => {
   const myTid = touristRef.current?.tid || localStorage.getItem("current_tid");
-  if (touristId !== myTid) return;
+  //if (touristId !== myTid) return;
 
   const zoneKey = `${myTid}_${zoneName}`;
 
@@ -895,6 +956,63 @@ socket.on("zone-alert", ({ touristId, zoneName, risk }) => {
   }
 });
 
+// socket.on("zone-alert", ({ touristId, zoneName, risk }) => {
+//   const myTid = touristRef.current?.tid || localStorage.getItem("tourist_id");
+
+//   // FIXED ID CHECK
+//   if (Array.isArray(touristId)) {
+//     if (!touristId.includes(myTid)) return;
+//   } else {
+//     if (touristId !== myTid) return;
+//   }
+
+//   const zoneKey = `${myTid}_${zoneName}`;
+
+//   playAlertSound(risk);
+//   onGeofenceAlert?.({ type: "zone", name: zoneName, risk });
+
+//   const alertDiv = document.createElement("div");
+//   alertDiv.className = "fixed inset-0 flex items-center justify-center bg-black/40 z-[9999]";
+
+//   alertDiv.innerHTML = `
+//     <div class="bg-white rounded-xl shadow-2xl w-80 p-5 animate-bounce-in">
+//       <h2 class="text-red-600 font-bold text-lg mb-2 flex items-center gap-2">⚠ Zone Alert</h2>
+//       <p class="text-gray-700 text-sm mb-4">
+//         You entered restricted zone: <b>${zoneName}</b><br>
+//         Risk: <b>${risk}</b>
+//       </p>
+//       <button class="closeZoneAlert w-full py-2 rounded-lg bg-red-600 text-white">Close</button>
+//     </div>
+//   `;
+//   document.body.appendChild(alertDiv);
+
+//   setTimeout(() => {
+//     alertDiv.querySelector(".closeZoneAlert")?.addEventListener("click", () => alertDiv.remove());
+//   }, 50);
+
+//   // Repeat reminder every 10 mins
+//   if (!zoneAlertTimers[zoneKey]) {
+//     zoneAlertTimers[zoneKey] = setInterval(() => {
+//       playAlertSound(risk);
+
+//       const repeatDiv = document.createElement("div");
+//       repeatDiv.className = "fixed inset-0 flex items-center justify-center bg-black/40 z-[9999]";
+//       repeatDiv.innerHTML = `
+//         <div class="bg-white rounded-xl shadow-2xl w-80 p-5 animate-bounce-in">
+//           <h2 class="text-red-600 font-bold text-lg">⚠ Zone Warning</h2>
+//           <p class="text-gray-700 text-sm mb-3">
+//             You are still inside zone: <b>${zoneName}</b><br>
+//             Risk: <b>${risk}</b>
+//           </p>
+//           <button class="closeRepeat w-full py-2 rounded-lg bg-red-600 text-white">OK</button>
+//         </div>
+//       `;
+//       document.body.appendChild(repeatDiv);
+//       repeatDiv.querySelector(".closeRepeat")?.addEventListener("click", () => repeatDiv.remove());
+//     }, 10 * 60 * 1000);
+//   }
+// });
+
     // --- Heatmap ---
     socket.on("heatmap-update", async (points) => {
       if (!mapRef.current) return;
@@ -961,7 +1079,7 @@ stopZoneAlert(zoneKey);
               latitude,
               longitude,
               timestamp: new Date().toISOString(),
-              touristId: t?.tid || localStorage.getItem("current_tid"),
+              touristId: t?.id || localStorage.getItem("current_tid"),
               personalId: p?.pid_personal_id,
               name: p?.pid_full_name || "Unknown",
               phone: p?.pid_mobile || "-",

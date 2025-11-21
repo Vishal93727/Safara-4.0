@@ -1,0 +1,238 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+import { env } from './config/env.js';
+import { buildApp } from './app.js';
+//import { connectMongo, disconnectMongo } from './db/mongoose.js';
+import { connectDatabase } from './config/database.js';
+
+import { Server as SocketIOServer } from 'socket.io';
+import cors from 'cors';
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Routes
+import authRoutes from './routes/auths.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
+
+// Fix __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const start = async () => {
+
+  console.log("🔌 Connecting MongoDB...");
+ // await connectMongo();
+
+  console.log("🛢 Connecting Second DB...");
+  await connectDatabase();
+
+  console.log("🚀 Building App...");
+  const app = buildApp();
+
+  // Add routes & middlewares from second server
+  app.use(cors({
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3000'
+    ],
+    credentials: true
+  }));
+
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+  // API Routes
+  app.use('/api/v1/auths', authRoutes);
+  app.use('/api/v1/upload', uploadRoutes);
+
+  // Health Check
+  app.get('/health', (req, res) => {
+    res.json({
+      success: true,
+      message: "Server Running OK",
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  // Start server
+  const server = app.listen(env.PORT, () =>
+    console.log(`🔥 Combined Server running on http://localhost:${env.PORT}`)
+  );
+
+  const io = new SocketIOServer(server, {
+    cors: { origin: "*", methods: ['GET', 'POST'] },
+    transports: ['websocket', 'polling'],
+  });
+
+  // ------------------------------------------------------------------------------------
+  // 📌 SOCKET.IO + GEOFENCE + INCIDENT SYSTEM (KEPT SAME)
+  // ------------------------------------------------------------------------------------
+
+  type LatLng = { lat: number; lng: number };
+  type Zone = { id: string; name: string; type: 'circle'|'polygon'; coords?: LatLng[]; radius?: number; risk?: string };
+  type Boundary = { id: string; name: string; type: 'circle'|'polygon'; center?: LatLng; coords?: LatLng[]; radius?: number };
+  type Incident = {
+    id: string;
+    touristSocketId: string;
+    touristId?: string;
+    touristName?: string;
+    touristPhone?: string;
+    location?: LatLng;
+    description?: string;
+    media?: { audio?: string; video?: string; photo?: string };
+    createdAt: number;
+    status: 'new' | 'acknowledged' | 'resolved';
+    officer?: { id?: string; name?: string };
+  };
+
+  const zones = new Map<string, Zone>();
+  const boundaries = new Map<string, Boundary>();
+  const incidents = new Map<string, Incident>();
+  const insideZonesBySocket = new Map<string, Set<string>>();
+  const boundaryInsideBySocket = new Map<string, boolean>();
+
+  const haversine = (a: LatLng, b: LatLng) => {
+    const toRad = (x: number) => (x * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  };
+
+  const pointInPolygon = (pt: LatLng, poly: LatLng[]) => {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i].lng, yi = poly[i].lat;
+      const xj = poly[j].lng, yj = poly[j].lat;
+      const intersect = yi > pt.lat !== yj > pt.lat &&
+        pt.lng < ((xj - xi) * (pt.lat - yi)) / (yj - yi) + xi;
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  };
+
+  // Handle socket connections
+  io.on('connection', (socket) => {
+    console.log("🟢 Client Connected:", socket.id);
+
+    // Sync zones & boundaries
+    for (const z of zones.values()) socket.emit('zone-update', z);
+    for (const b of boundaries.values()) socket.emit('boundary-update', b);
+
+    // LIVE TOURIST DATA
+    socket.on('live-tourist-data', (data) => {
+      io.emit('receive-location', {
+        ...data,
+        socketId: socket.id,
+        timestamp: data.timestamp || Date.now()
+      });
+
+      const here = { lat: data.latitude, lng: data.longitude };
+
+      const prevSet = insideZonesBySocket.get(socket.id) ?? new Set();
+      const nextSet = new Set<string>();
+
+      for (const z of zones.values()) {
+        let inside = false;
+
+        if (z.type === 'circle' && z.coords && z.radius) {
+          const center = z.coords[0];
+          inside = haversine(here, center) <= z.radius;
+        } else if (z.type === 'polygon' && z.coords) {
+          inside = pointInPolygon(here, z.coords);
+        }
+
+        if (inside) {
+          nextSet.add(z.id);
+          if (!prevSet.has(z.id)) {
+            io.emit('zone-alert', {
+              touristId: data.touristId,
+              zoneName: z.name,
+              risk: z.risk || 'low'
+            });
+          }
+        }
+      }
+
+      insideZonesBySocket.set(socket.id, nextSet);
+
+      let insideBoundary = false;
+      for (const b of boundaries.values()) {
+        if (b.type === 'circle' && b.center) {
+          if (haversine(here, b.center) <= (b.radius || 0)) insideBoundary = true;
+        } else if (b.type === 'polygon' && b.coords) {
+          if (pointInPolygon(here, b.coords)) insideBoundary = true;
+        }
+      }
+
+      const prevInside = boundaryInsideBySocket.get(socket.id);
+      if (prevInside && !insideBoundary) {
+        io.emit('outside-boundary-alert', {
+          touristId: data.touristId,
+          boundaryName: "Area"
+        });
+      }
+
+      boundaryInsideBySocket.set(socket.id, insideBoundary);
+    });
+
+    // Incidents
+    socket.on('sos-create', (payload) => {
+      const id = payload.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const incident = {
+        id,
+        touristSocketId: socket.id,
+        createdAt: Date.now(),
+        status: 'new',
+        ...payload
+      };
+      incidents.set(id, incident);
+
+      io.emit('incident-new', incident);
+      socket.emit('sos-received', { id });
+    });
+
+    socket.on('incident-ack', ({ id, officer }) => {
+      const inc = incidents.get(id);
+      if (!inc) return;
+      inc.status = 'acknowledged';
+      inc.officer = officer;
+      io.emit('incident-updated', inc);
+    });
+
+    socket.on('incident-resolve', ({ id, notes }) => {
+      const inc = incidents.get(id);
+      if (!inc) return;
+      inc.status = 'resolved';
+      inc.notes = notes;
+      io.emit('incident-updated', inc);
+    });
+
+    socket.on('disconnect', () => {
+      insideZonesBySocket.delete(socket.id);
+      boundaryInsideBySocket.delete(socket.id);
+      io.emit('user-disconnected', socket.id);
+    });
+  });
+
+  // Shutdown handlers
+  // const shutdown = () =>
+  //   server.close(async () => {
+  //     await disconnectMongo();
+  //     process.exit(0);
+  //   });
+
+  //process.on('SIGINT', shutdown);
+ // process.on('SIGTERM', shutdown);
+};
+
+start();

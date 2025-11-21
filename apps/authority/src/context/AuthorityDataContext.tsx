@@ -132,7 +132,7 @@ interface PersonalData {
 }
 
 interface TouristData {
-  tid?: string | null;
+  touristId?: string | null;
   tid_status?: string | null;
   tid_userId?: string | null;
   trip?: any;

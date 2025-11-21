@@ -28,6 +28,7 @@ async function parse(res: Response) {
 }
 
 export async function createTrip(payload: {
+  tid: string;
   holderPid: string;
   startDate: string;
   endDate: string;

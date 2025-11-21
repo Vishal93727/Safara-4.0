@@ -47,8 +47,8 @@ export default function TouristIdDocs() {
     const latest = await getTrip(tid);
     if (latest.status === 'active') {
       // Optional: clear temp storage
-      localStorage.removeItem('current_tid');
-      localStorage.removeItem('current_tid_status');
+      //localStorage.removeItem('current_tid');
+     // localStorage.removeItem('current_tid_status');
       navigate('/activated-mode');
     } else {
       navigate('/home');

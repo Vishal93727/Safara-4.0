@@ -40,12 +40,12 @@ const Login = () => {
   //     setError(err.message || 'Login failed');
   //   }
   // };
-const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   setError('');
 
   try {
-    const response = await fetch('http://localhost:3000/api/v1/auth/login', {
+    const response = await fetch('http://localhost:3001/api/v1/auth/signin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
@@ -57,21 +57,20 @@ const handleLogin = async (e: React.FormEvent) => {
       throw new Error(data.message || 'Login failed');
     }
 
-    // Save only token + user
-   // localStorage.setItem('sentinelview_auth', JSON.stringify(data.data));
-// Save token separately
-localStorage.setItem("token", data.data.token);
+    // ✅ Store everything in one key
+    localStorage.setItem('sentinelview_auth', JSON.stringify({
+      token: data.data.token,
+      user: data.data.user
+    }));
 
-// Save user info separately if you need it
-localStorage.setItem("user", JSON.stringify(data.data.user));
-
-setIsAuthenticated(true);
-    
-
+    setIsAuthenticated(true); // this will trigger <Navigate /> to dashboard
   } catch (err: any) {
     setError(err.message || 'Login failed');
   }
 };
+
+
+
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }

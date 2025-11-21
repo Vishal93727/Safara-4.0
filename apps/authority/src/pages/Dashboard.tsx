@@ -52,6 +52,7 @@ interface LocationData {
   email?: string;
   nationality?: string;
   destination?: string;
+  touristId: string;
   tripStart?: string;
   tripEnd?: string;
   status?: string;
@@ -75,12 +76,14 @@ interface LiveAlert {
   message: string;
   time: string;
   name: string;
-  phone: string;
+  phone?: string;
+touristId: string;
   latitude: number;
   longitude: number;
-  email: string;
+  email?: string;
   placeName:string;
   type: "zone" | "incident" | "system";
+  risk: string;
 }
 
 interface ZoneData {
@@ -188,7 +191,7 @@ const [uiAlerts, setUiAlerts] = useState<any[]>([]);
 const onReceiveLocation = (raw: any) => {
   // 1) Normalize backend → frontend structure
   const data: TouristLocation = {
-    id: raw.socketId || raw.id || raw.tid,
+    id: raw.touristId || raw.id || raw.socketId,
     latitude: raw.latitude ?? raw.lat,
     longitude: raw.longitude ?? raw.lng,
     name: raw.name,
@@ -214,8 +217,9 @@ const onReceiveLocation = (raw: any) => {
   // 2) Build popup details for map marker
   const popupContent = `
     <div style="font-size:13px;">
+      <b>TouristId:</b> ${data.id|| "-"}<br/>
 
-      <b>${data.name || "Unknown Tourist"}</b><br/>
+      <b>Name:</b>${data.name || "Unknown Tourist"}<br/>
       <b>Phone:</b> ${data.phone || "-"}<br/>
       <b>Email:</b> ${data.email || "-"}<br/>
       <b>Nationality:</b> ${data.nationality || "-"}<br/>
@@ -341,6 +345,7 @@ socket.on("incident-new", async (inc: Incident) => {
     id: Date.now() + Math.random(),
 
     // MAIN NOTIFICATION MESSAGE
+    //message: `New SOS from ${enhancedIncident.touristName}`,
     message: `New SOS from ${enhancedIncident.touristName}`,
     time: new Date().toLocaleTimeString(),
     type: "incident",
@@ -680,6 +685,7 @@ socket.on("zone-alert", (data: ZoneAlert) => {
       latitude: t?.latitude || 0,
       longitude: t?.longitude || 0,
       personalId: t?.personalId || "-",
+      touristId: t?.touristId || "-",
       tripStart: t?.tripStart || "-",
       tripEnd: t?.tripEnd || "-",
     };
@@ -821,6 +827,7 @@ function saveZoneAlert(full: any) {
         email: full.email,
         destination: full.destination,
         personalId: full.personalId,
+        touristId: full.touristId,
         latitude: full.latitude,
         longitude: full.longitude,
         risk: full.risk,
@@ -1145,6 +1152,9 @@ return (
 
       <p className="col-span-2">
         <b>Personal ID:</b> {a.personalId || "-"}
+      </p>
+            <p className="col-span-2">
+        <b>Tourist ID:</b> {a.touristId || "-"}
       </p>
     </div>
 

@@ -62,3 +62,80 @@ export function saveTouristIdFromDraft(): TouristIdRecord {
 
   return rec;
 }
+
+// src/lib/touristId.ts
+// import { getUserItem, setUserItem, getSession, setSession } from '@/lib/session';
+// import { readTripDraft } from '@/lib/trip';
+
+// export type TouristIdRecord = {
+//   id: string;
+//   holderPid: string | null;
+//   destination: string | null;
+//   startDate: string | null; // yyyy-mm-dd
+//   endDate: string | null;   // yyyy-mm-dd
+//   status: 'active' | 'scheduled' | 'expired';
+//   createdAt: string;
+//   itinerary?: string | null;
+//   agencyId?: string | null;
+//   homeCity?: string | null;
+// };
+
+// function computeStatus(start?: string | null, end?: string | null): 'active' | 'scheduled' | 'expired' {
+//   const now = new Date();
+//   const s = start ? new Date(start) : null;
+//   const e = end ? new Date(end) : null;
+//   if (s && e) {
+//     if (now < s) return 'scheduled';
+//     if (now > e) return 'expired';
+//     return 'active';
+//   }
+//   return 'scheduled';
+// }
+
+// export function saveTouristIdFromDraft(): TouristIdRecord {
+//   // Ensure session exists
+//   let session = getSession();
+//   if (!session) {
+//     session = setSession('USER-' + Math.random().toString(36).slice(2, 8).toUpperCase(), 'Visitor');
+//     console.log('Random session created:', session);
+//   }
+
+//   const draft = readTripDraft();
+//   const pid = getUserItem('pid_personal_id', session) || null;
+//   const start = draft.startNow ? new Date().toISOString().slice(0, 10) : (draft.startDate || null);
+//   const end = draft.endDate || null;
+// const id= `TID-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+//   const rec: TouristIdRecord = {
+//     id,
+//     holderPid: pid,
+//     destination: draft.destination || null,
+//     startDate: start,
+//     endDate: end,
+//     status: computeStatus(start, end),
+//     createdAt: new Date().toISOString(),
+//     itinerary: draft.itinerary || null,
+//     agencyId: draft.agencyId || null,
+//     homeCity: draft.homeCity || null,
+//   };
+
+//   // Save the full record as JSON
+
+//   // Save individual fields
+//   setUserItem('tourist_id', rec.id, session);
+//   setUserItem('tourist_id_start', rec.startDate || '', session);
+//   setUserItem('tourist_id_end', rec.endDate || '', session);
+//   setUserItem('tourist_id_destination', rec.destination || '', session);
+//   setUserItem('tourist_id_status', rec.status, session);
+//   setUserItem('tourist_id_created', rec.createdAt, session);
+//   setUserItem('tourist_id_itinerary', rec.itinerary || '', session);
+//   setUserItem('tourist_id_agency', rec.agencyId || '', session);
+//   setUserItem('tourist_id_home', rec.homeCity || '', session);
+
+//   try {
+//     setUserItem('tourist_id_record', JSON.stringify(rec), session);
+//   } catch (err) {
+//     console.error('Unable to save tourist record JSON:', err);
+//   }
+//   return rec;
+// }
+

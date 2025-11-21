@@ -443,7 +443,7 @@ useEffect(() => {
 
                       <div className="flex flex-col gap-2 text-[15px] text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">Tourist ID:</span>
+                          <span className="font-medium">Personal ID:</span>
                           <span>{tourist.personalId || "-"}</span>
                         </div>
 
@@ -519,6 +519,7 @@ useEffect(() => {
             <div className="space-y-3">
               <p><strong>Name:</strong> {selectedTourist.name}</p>
               <p><strong>ID:</strong> {selectedTourist.personalId}</p>
+          
               <p><strong>Nationality:</strong> {selectedTourist.nationality}</p>
               <p><strong>Email:</strong> {selectedTourist.email}</p>
               <p><strong>Phone:</strong> {selectedTourist.phone}</p>

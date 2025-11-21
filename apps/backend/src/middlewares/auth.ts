@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyAccess } from '../utils/jwt.js';
+import { verifyAccess } from '../utils/jwt';
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const hdr = req.headers.authorization;

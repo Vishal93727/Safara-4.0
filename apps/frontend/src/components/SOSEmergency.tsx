@@ -4,6 +4,10 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useUserData } from "@/context/UserDataContext";
+import { getTouristFromLocal} from '@/lib/session';
+
+import { TouristIdRecord,saveTouristIdFromDraft } from '@/lib/touristId';
+
 import { 
   AlertTriangle, 
   Phone, 
@@ -49,6 +53,23 @@ const { personal, tourist } = useUserData();
   const personalRef = useRef(personal);
   const touristRef = useRef(tourist);
 
+
+const [tourists, setTourist] = useState<TouristIdRecord | null>(null);
+
+  useEffect(() => {
+    // Get the saved tourist record from session/localStorage
+    const data = getTouristFromLocal();
+   console.log(data);
+    setTourist(data);
+  }, []);
+    const rec = saveTouristIdFromDraft();
+console.log('Saved tourist record:', rec);
+console.log('Saved tourist record:', rec.id);
+
+// Check localStorage manually
+console.log(localStorage.getItem('DEFAULT_USER:tourist_id_record'));
+
+  
   // keep refs updated
   useEffect(() => {
     personalRef.current = personal;
@@ -57,7 +78,7 @@ const { personal, tourist } = useUserData();
   const p = personalRef.current;
             const t = touristRef.current;
             
-console.log(p);
+//console.log(p);
   useEffect(() => {
     if (!SOCKET_URL) return;
     const s = io(SOCKET_URL, { transports: ['websocket','polling'] });
@@ -127,10 +148,13 @@ console.log(p);
     // ✅ Location fallback for demo
    const location = userLocation || { lat: userLocation?.lat, lng: userLocation?.lng };
 // Pull lightweight identity available in app/session
-     const touristId = t?.tid || localStorage.getItem("current_tid");
+const tour = JSON.parse(localStorage.getItem('YOUR_USERID:tourist_id_record') || 'null');
+console.log(tour);
+console.log(t);
+     const touristId = t?.id ||localStorage.getItem("current_tid")|| localStorage.getItem("tourist_id") || rec?.id;
       const touristName = p?.pid_full_name || "Unknown";
       const touristPhone =  p?.pid_mobile || "-";
-console.log(t);
+//console.log(t);
               
               
     const payload = {
@@ -171,7 +195,7 @@ console.log(t);
 
         if (response.ok) {
           const result = await response.json();
-          console.log('🚨 Emergency escalated:', result);
+         // console.log('🚨 Emergency escalated:', result);
         }
       }
 
@@ -448,6 +472,10 @@ This is a real emergency alert - authorities are being contacted.
           <p className="text-sm text-white/80">
             Automatically connecting to emergency services
           </p>
+          
+          
+
+  
         </Card>
 
         <Button 
@@ -463,3 +491,12 @@ This is a real emergency alert - authorities are being contacted.
     </div>
   );
 }
+
+
+
+  
+
+  
+
+  
+

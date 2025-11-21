@@ -365,6 +365,7 @@ const start = async () => {
     const s = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
     return 2*R*Math.asin(Math.sqrt(s));
   };
+const activeTourists = new Map(); // store last known tourist location
 
   const pointInPolygon = (pt: LatLng, poly: LatLng[]) => {
     let inside = false;
@@ -405,6 +406,14 @@ const start = async () => {
         longitude,
         timestamp: data.timestamp || Date.now(),
       });
+activeTourists.set(socket.id, { 
+  ...data, 
+  socketId: socket.id, 
+  timestamp: Date.now() 
+});
+socket.on("get-active-tourists", () => {
+  socket.emit("active-tourist-list", Array.from(activeTourists.values()));
+});
 
       // --- Geofence checks ---
       const here: LatLng = { lat: latitude, lng: longitude };
@@ -495,8 +504,11 @@ socket.on('live-tourist-data', (data) => {
       io.emit('user-disconnected', socket.id);
       insideZonesBySocket.delete(socket.id);
       boundaryInsideBySocket.delete(socket.id);
+      activeTourists.delete(socket.id);
+
     });
   });
+
 
   const shutdown = () => server.close(async ()=>{ await disconnectMongo(); process.exit(0); });
   process.on('SIGINT', shutdown);

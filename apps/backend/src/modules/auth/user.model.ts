@@ -1,4 +1,4 @@
-import { Schema, model, InferSchemaType } from 'mongoose';
+import mongoose, { Schema, model, InferSchemaType } from 'mongoose';
 
 const UserSchema = new Schema(
   {
@@ -10,4 +10,23 @@ const UserSchema = new Schema(
 );
 
 export type UserDoc = InferSchemaType<typeof UserSchema> & { _id: string };
-export const User = model('User', UserSchema);
+export const User =
+  mongoose.models.User || mongoose.model("User", UserSchema);
+
+
+// import mongoose, { Schema, model, InferSchemaType } from 'mongoose';
+
+// const TourSchema = new Schema(
+//   {
+//     email: { type: String, index: true, unique: true, sparse: true },
+//     phone: { type: String, index: true, unique: true, sparse: true },
+//     passwordHash: { type: String }
+//   },
+//   { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } }
+// );
+
+// export type UserDoc = InferSchemaType<typeof TourSchema> & { _id: string };
+// export const Tour =
+//   mongoose.models.Tour || mongoose.model("Tour", TourSchema);
+
+

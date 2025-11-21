@@ -1346,7 +1346,7 @@ const handleFileUpload = (fileType: string, file?: File | null) => {
 //     data.append("file", fileData.file);
 //     data.append("type", key); // tell backend which document
 
-//     const res = await fetch("http://localhost:3000/api/v1/upload", {
+//     const res = await fetch("http://localhost:3001/api/v1/upload", {
 //       method: "POST",
 //       body: data,
 //     });
@@ -1363,7 +1363,7 @@ for (const [key, fileData] of Object.entries(uploadedFiles)) {
     const data = new FormData();
     data.append("file", fileData.file); // exact field name
     // POST to correct endpoint
-    const res = await fetch("http://localhost:3000/api/v1/upload  ", {
+    const res = await fetch("http://localhost:3001/api/v1/upload  ", {
       method: "POST",
       body: data,
     });
@@ -1381,7 +1381,7 @@ for (const [key, fileData] of Object.entries(uploadedFiles)) {
   uploadedFiles: uploadedFileUrls,
   consent: { accepted: true }   // ✅ force consent
 };
-      const response = await fetch("/api/v1/auth/register", {
+      const response = await fetch("http://localhost:3001/api/v1/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

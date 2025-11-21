@@ -356,9 +356,60 @@ const [manualFIR, setManualFIR] = useState<Partial<EFIR & {
   nationality: "",
   description: "",
 });
+
+
+// useEffect(() => {
+//   const SOCKET_URL = import.meta.env.VITE_AUTHORITY_SOCKET_URL || "http://localhost:3000";
+//   const socket: Socket = io(SOCKET_URL, { transports: ["websocket", "polling"], reconnection: true });
+
+//   // ------------------- Tourist Events -------------------
+//   socket.on("receive-location", (raw: any) => {
+//     const data: TouristLocation = {
+//       id: raw.socketId || raw.id || raw.tid,
+//       latitude: raw.latitude ?? raw.lat,
+//       longitude: raw.longitude ?? raw.lng,
+//       name: raw.name,
+//       phone: raw.phone,
+//       email: raw.email,
+//       nationality: raw.nationality,
+//       destination: raw.destination,
+//       status: raw.status,
+//       tripStart: raw.tripStart,
+//       tripEnd: raw.tripEnd,
+//       timestamp: raw.timestamp || Date.now(),
+//       personalId: raw.personalId,
+//     };
+//     if (!data.id || !data.latitude || !data.longitude) return;
+//     addOrUpdateTourist(data);
+//   });
+
+//   socket.on("user-disconnected", removeTourist);
+
+//   // ------------------- Incident Events -------------------
+//   socket.on("incident-new", (inc: Incident) => {
+//     handleIncidentFIR(inc);
+//   });
+//   socket.on("incident-list", (list: Incident[]) => {
+//     list.forEach(inc => handleIncidentFIR(inc));
+//   });
+//   socket.on("incident-updated", (inc: Incident) => {
+//     setEfirs(prev => prev.map(f => (f.id === inc.id ? { ...f, status: inc.status || f.status } : f)));
+//   });
+
+//   return () => socket.disconnect();
+// }, []);
+
+
 useEffect(() => {
   const SOCKET_URL = import.meta.env.VITE_AUTHORITY_SOCKET_URL || "http://localhost:3000";
   const socket: Socket = io(SOCKET_URL, { transports: ["websocket", "polling"], reconnection: true });
+
+  // Request full data when connected
+  socket.on("connect", () => {
+    console.log("Connected → requesting active tourist list...");
+    socket.emit("get-active-tourists");
+    socket.emit("get-incident-list"); // optional if needed
+  });
 
   // ------------------- Tourist Events -------------------
   socket.on("receive-location", (raw: any) => {
@@ -381,15 +432,22 @@ useEffect(() => {
     addOrUpdateTourist(data);
   });
 
+  socket.on("active-tourist-list", (list: TouristLocation[]) => {
+    console.log("Received full tourist list:", list);
+    list.forEach(t => addOrUpdateTourist(t));
+  });
+
   socket.on("user-disconnected", removeTourist);
 
   // ------------------- Incident Events -------------------
   socket.on("incident-new", (inc: Incident) => {
     handleIncidentFIR(inc);
   });
+
   socket.on("incident-list", (list: Incident[]) => {
     list.forEach(inc => handleIncidentFIR(inc));
   });
+
   socket.on("incident-updated", (inc: Incident) => {
     setEfirs(prev => prev.map(f => (f.id === inc.id ? { ...f, status: inc.status || f.status } : f)));
   });
