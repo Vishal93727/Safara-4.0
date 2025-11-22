@@ -507,59 +507,7 @@ L.Icon.Default.mergeOptions({
 
 
 // ⭐⭐⭐ ADDITION A — GLOBAL TRACKER (DO NOT REMOVE YOUR OLD CODE)
-// let globalSocket: Socket | null = null;
-// let globalGeoWatchId: number | null = null;
 
-// function startGlobalLiveTracking(getPersonal: () => any, getTourist: () => any) {
-//   if (globalSocket) return;
-
-//   globalSocket = io(SOCKET_URL, {
-//     transports: ["websocket"],
-//     reconnection: true,
-//     reconnectionAttempts: Infinity,
-//   });
-
-//   globalSocket.on("connect", () => {
-//     const p = getPersonal();
-//     const t = getTourist();
-
-//     globalSocket?.emit("register-tourist", {
-//       touristId: rec?.id || localStorage.getItem("tourist_id"),
-//       personalId: p?.pid_personal_id,
-//       name: p?.pid_full_name || "Unknown",
-//       email: p?.pid_email || "-",
-//       phone: p?.pid_mobile || "-",
-//       nationality: p?.pid_nationality || "Indian",
-//     });
-//   });
-
-//   if ("geolocation" in navigator) {
-//     globalGeoWatchId = navigator.geolocation.watchPosition(
-//       (pos) => {
-//         const p = getPersonal();
-//         const t = getTourist();
-
-//         globalSocket?.emit("live-tourist-data", {
-//           latitude: pos.coords.latitude,
-//           longitude: pos.coords.longitude,
-//           timestamp: new Date().toISOString(),
-//           touristId: rec?.id || localStorage.getItem("tourist_id"),
-//           personalId: p?.pid_personal_id,
-//           name: p?.pid_full_name,
-//           phone: p?.pid_mobile,
-//           email: p?.pid_email || t?.email,
-//           nationality: p?.pid_nationality || "-",
-//           destination: t?.trip?.destination || "-",
-//           tripStart: t?.trip?.startDate || "-",
-//           tripEnd: t?.trip?.endDate || "-",
-//           status: t?.tid_status || "active",
-//         });
-//       },
-//       (err) => console.log("Global geo error:", err),
-//       { enableHighAccuracy: true }
-//     );
-//   }
-// }
 
 let globalSocket: Socket | null = null;
 let globalGeoWatchId: number | null = null;

@@ -45,7 +45,7 @@ const Login = () => {
   setError('');
 
   try {
-    const response = await fetch('http://localhost:3001/api/v1/auth/signin', {
+    const response = await fetch('http://localhost:3000/api/v1/auths/signin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),

@@ -5,7 +5,14 @@ export interface IUserDocument extends Document {
   personalInfo: {
     firstName: string;
     lastName: string;
-    email: string;
+    email: {
+  type: String,
+  required: true,
+  unique: true,
+  lowercase: true,
+  trim: true,
+};
+
     phone: string;
     dateOfBirth: Date;
     gender: string;
@@ -121,5 +128,3 @@ UserSchema.methods.comparePassword = async function(candidatePassword: string): 
 };
 
 export const User = mongoose.model<IUserDocument>('User', UserSchema);
-
-

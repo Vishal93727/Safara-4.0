@@ -3,7 +3,7 @@ import { authService } from '../services/auth.service';
 import { emailService } from '../services/email.service';
 import { RegistrationRequest } from '../models/RegistrationRequest';
 import { successResponse, errorResponse } from '../utils/responses';
-import { AuthRequest } from '../middlewares/auth';
+import { AuthRequest } from '../middlewares/authMiddleware';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -27,7 +27,7 @@ export const register = async (req: Request, res: Response) => {
       departmentInfo,
       accountDetails: {
         ...accountDetails,
-        status: 'pending'
+        status: 'approved'
       },
       uploadedFiles
     });
@@ -39,7 +39,7 @@ export const register = async (req: Request, res: Response) => {
     const registrationRequest = new RegistrationRequest({
       userId: user._id,
       requestId,
-      status: 'pending',
+      status: 'approved',
       submittedAt: new Date()
     });
 
@@ -55,7 +55,7 @@ export const register = async (req: Request, res: Response) => {
     return successResponse(res, {
       requestId,
       userId: user._id,
-      status: 'pending',
+      status: 'approved',
       message: 'Registration request submitted successfully. Awaiting admin approval.',
       estimatedProcessingTime: '3-5 business days'
     }, 'Registration successful', 201);

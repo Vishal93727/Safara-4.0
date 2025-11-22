@@ -7,6 +7,31 @@ export class AuthService {
     await user.save();
     return user;
   }
+  
+//   async createUser(userData: any): Promise<IUserDocument> {
+//   const { personalInfo, accountDetails } = userData;
+
+//   if (!personalInfo?.email) {
+//     throw new Error("Email is required");
+//   }
+//   if (!accountDetails?.password) {
+//     throw new Error("Password is required");
+//   }
+
+//   // Hash password
+//   const hashedPassword = await (new User()).hashPassword(accountDetails.password);
+
+//   const user = new User({
+//     ...userData,
+//     email: personalInfo.email, // <-- needed for unique indexing
+//     username: accountDetails.username,
+//     'accountDetails.password': hashedPassword
+//   });
+
+//   await user.save();
+//   return user;
+// }
+
 
   async findUserByUsername(username: string): Promise<IUserDocument | null> {
     return await User.findOne({ 'accountDetails.username': username });
@@ -142,5 +167,3 @@ export class AuthService {
 }
 
 export const authService = new AuthService();
-
-

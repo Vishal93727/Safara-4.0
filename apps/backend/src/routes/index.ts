@@ -5,13 +5,18 @@ import { router as pidDocs } from '../modules/pid/docs.routes.js';
 import { router as tourist } from '../modules/tourist/tourist.routes.js';
 import { Router } from "express";
 
-
+import authRoutes from './auths.routes';
+// import { errorHandler } from './middlewares/errorHandler';
 
 
 export const router = Router();
 router.use('/v1/auth', auth);
 router.use('/v1/pid', pid); // NEW
-
+router.use('/v1/auths', authRoutes);
 
 router.use('/v1/tourist', tourist);
 router.use('/v1/pid/docs', pidDocs);
+
+
+
+

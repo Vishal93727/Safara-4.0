@@ -1,232 +1,5 @@
 
 
-// import React, { useState, useEffect } from "react";
-// import { useAuthorityData } from "@/context/AuthorityDataContext";
-// import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { Textarea } from "@/components/ui/textarea";
-
-// import { Mail, Printer, Download } from "lucide-react";
-// import jsPDF from "jspdf";
-
-// interface EFIR {
-//   id: string;
-//   zoneId: string;
-//   zoneName: string;
-//   touristId?: string;
-//   touristName?: string;
-//   email?: string;
-//   mobile?: string;
-//   nationality?: string;
-//   latitude?: number;
-//   longitude?: number;
-//   description: string;
-//   timestamp: string;
-//   status: "pending" | "submitted" | "resolved";
-// }
-
-// const EFIR: React.FC = () => {
-//   const { zones, liveAlerts, tourists } = useAuthorityData();
-// console.log(liveAlerts);
-// console.log(tourists);
-//   const [efirs, setEfirs] = useState<EFIR[]>([]);
-//   const [selectedAlert, setSelectedAlert] = useState<any>(null);
-//   const [description, setDescription] = useState("");
-
-//   // Auto-generate FIR from alerts
-//   useEffect(() => {
-//     liveAlerts.forEach(alert => {
-//       const exists = efirs.some(f => f.zoneId === alert.zoneId && f.touristId === alert.touristId);
-//       if (!exists && (alert.type === "restricted-zone-entry" || alert.type === "sos")) {
-//         const tourist = Object.values(tourists).find(t => t.id === alert.touristId);
-//         generateEFIR(alert, tourist);
-//       }
-//     });
-//   }, [liveAlerts, tourists, efirs]);
-
-//   const generateEFIR = (alert: any, tourist?: any, manualDescription?: string) => {
-//     const newEFIR: EFIR = {
-//       id: crypto.randomUUID(),
-//       zoneId: alert.zoneId,
-//       zoneName: alert.zoneName,
-//       touristId: tourist?.id,
-//       touristName: tourist?.name || tourist?.pid_full_name,
-//       email: tourist?.email || tourist?.pid_email,
-//       mobile: tourist?.phone || tourist?.pid_mobile,
-//       nationality: tourist?.nationality || tourist?.pid_nationality,
-//       latitude: tourist?.latitude,
-//       longitude: tourist?.longitude,
-//       description: manualDescription || `Automatic FIR generated for ${alert.type} in zone ${alert.zoneName}`,
-//       timestamp: new Date().toISOString(),
-//       status: "pending",
-//     };
-//     console.log(newEFIR);
-//     setEfirs(prev => [newEFIR, ...prev]);
-//   };
-
-//   const handleManualFIR = () => {
-//     if (!selectedAlert || !description) return;
-//     const tourist = Object.values(tourists).find(t => t.id === selectedAlert.touristId);
-//     generateEFIR(selectedAlert, tourist, description);
-//     setDescription("");
-//     setSelectedAlert(null);
-//   };
-
-//   const handlePrintEFIR = (fir: EFIR) => {
-//     const printContent = generateEFIRContent(fir);
-//     const printWindow = window.open("", "_blank");
-//     if (printWindow) {
-//       printWindow.document.write(printContent);
-//       printWindow.document.close();
-//       printWindow.print();
-//     }
-//   };
-
-//   const handleSendEmail = async (fir: EFIR) => {
-//     if (!fir.email) return alert("No email available for this tourist.");
-//     alert(`E-FIR sent to ${fir.email}`);
-//   };
-
-//   const handleDownloadPDF = (fir: EFIR) => {
-//     const doc = new jsPDF();
-
-//     doc.setFont("Helvetica", "bold");
-//     doc.setFontSize(18);
-//     doc.text("FIRST INFORMATION REPORT (F.I.R.)", 14, 18);
-
-//     doc.setFontSize(14);
-//     doc.text("(Under Section 154 Cr.P.C.)", 14, 26);
-
-//     doc.setFont("Helvetica", "normal");
-//     doc.setFontSize(12);
-//     doc.text("Government of India – Ministry of Tourism & Local Police Department", 14, 34);
-
-//     doc.text(`District: ___________________________`, 14, 46);
-//     doc.text(`Police Station: _______________________`, 14, 54);
-//     doc.text(`Year: ${new Date().getFullYear()}`, 14, 62);
-//     doc.text(`FIR No.: ${fir.id}`, 14, 70);
-//     doc.text(`Date & Time of FIR: ${new Date(fir.timestamp).toLocaleString()}`, 14, 78);
-
-//     doc.line(14, 82, 200, 82);
-
-//     doc.text("1. Type of Information: Written", 14, 92);
-//     doc.text("2. Place of Occurrence:", 14, 102);
-//     doc.text(`   Zone Name: ${fir.zoneName}`, 14, 110);
-//     doc.text(`   Zone Type: ${fir.zoneId}`, 14, 118);
-//     doc.text(`   Coordinates: ${fir.latitude || "N/A"}, ${fir.longitude || "N/A"}`, 14, 126);
-//     doc.text(`   Nearest Landmark: ______________________`, 14, 134);
-
-//     doc.text("3. Complainant / Informant (Tourist):", 14, 146);
-//     doc.text(`   Name: ${fir.touristName || "N/A"}`, 14, 154);
-//     doc.text(`   Email: ${fir.email || "N/A"}`, 14, 162);
-//     doc.text(`   Mobile: ${fir.mobile || "N/A"}`, 14, 170);
-//     doc.text(`   Nationality: ${fir.nationality || "N/A"}`, 14, 178);
-//     doc.text(`   Tourist ID: ${fir.touristId || "N/A"}`, 14, 186);
-
-//     doc.text("4. Details of the Occurrence / Incident:", 14, 198);
-//     doc.setFont("Helvetica", "italic");
-//     doc.text(fir.description, 14, 206, { maxWidth: 180 });
-//     doc.setFont("Helvetica", "normal");
-
-//     doc.text("5. Actions Taken by Authority:", 14, 226);
-//     doc.text("   - Alert received via automated monitoring system", 14, 234);
-//     doc.text("   - Verified tourist & location details", 14, 242);
-//     doc.text("   - FIR generated digitally under Indian Tourism Safety Program", 14, 250);
-
-//     doc.text("6. Signature of Complainant: (Digital E-FIR — Not Required)", 14, 268);
-
-//     doc.text("7. Signature of Officer-in-Charge:", 14, 278);
-//     doc.text("   (Digitally Signed)", 14, 286);
-//     doc.text("   Name: ____________________", 14, 294);
-//     doc.text("   Badge No: ________________", 14, 302);
-//     doc.text("   Police Station: ____________", 14, 310);
-
-//     doc.save(`E-FIR_${fir.id}.pdf`);
-//   };
-
-//   const generateEFIRContent = (fir: EFIR) => `
-//     <h2 style="text-align:center">E-FIR (Electronic First Information Report)</h2>
-//     <p><strong>FIR ID:</strong> ${fir.id}</p>
-//     <p><strong>Zone:</strong> ${fir.zoneName}</p>
-//     <p><strong>Tourist Name:</strong> ${fir.touristName || "N/A"}</p>
-//     <p><strong>Email:</strong> ${fir.email || "N/A"}</p>
-//     <p><strong>Mobile:</strong> ${fir.mobile || "N/A"}</p>
-//     <p><strong>Nationality:</strong> ${fir.nationality || "N/A"}</p>
-//     <p><strong>Description:</strong> ${fir.description}</p>
-//     <p><strong>Date/Time:</strong> ${new Date(fir.timestamp).toLocaleString()}</p>
-//     <p><strong>Status:</strong> ${fir.status}</p>
-//     <hr/>
-//     <p style="text-align:center;">Generated electronically under Indian Tourism Department guidelines.</p>
-//   `;
-
-//   return (
-//     <div className="space-y-6">
-//       <h1 className="text-3xl font-bold">E-FIR Management</h1>
-
-//       {/* Manual FIR Creation */}
-//       <Card className="card-shadow">
-//         <CardHeader>
-//           <CardTitle>Create Manual FIR</CardTitle>
-//           <CardDescription>Select an alert or incident and add description.</CardDescription>
-//         </CardHeader>
-//         <CardContent className="space-y-3">
-//           <select
-//             className="w-full border p-2 rounded"
-//             value={selectedAlert?.id || ""}
-//             onChange={e => setSelectedAlert(liveAlerts.find(a => a.id === e.target.value))}
-//           >
-//             <option value="">Select Alert / Incident</option>
-//             {liveAlerts.map(a => (
-//               <option key={a.id} value={a.id}>
-//                 {a.type} - {a.zoneName}
-//               </option>
-//             ))}
-//           </select>
-//           <Textarea
-//             placeholder="Enter FIR description"
-//             value={description}
-//             onChange={e => setDescription(e.target.value)}
-//           />
-//           <Button onClick={handleManualFIR}>Generate FIR</Button>
-//         </CardContent>
-//       </Card>
-
-//       {/* List of E-FIRs */}
-//       <Card className="card-shadow">
-//         <CardHeader>
-//           <CardTitle>All E-FIRs</CardTitle>
-//           <CardDescription>Automatically and manually generated FIRs.</CardDescription>
-//         </CardHeader>
-//         <CardContent>
-//           {efirs.length > 0 ? (
-//             <div className="space-y-4">
-//               {efirs.map(fir => (
-//                 <div key={fir.id} className="p-3 border rounded-lg">
-//                   <p><strong>ID:</strong> {fir.id}</p>
-//                   <p><strong>Zone:</strong> {fir.zoneName}</p>
-//                   <p><strong>Tourist:</strong> {fir.touristName || "N/A"}</p>
-//                   <p><strong>Description:</strong> {fir.description}</p>
-//                   <p><strong>Date/Time:</strong> {new Date(fir.timestamp).toLocaleString()}</p>
-//                   <div className="flex gap-2 mt-2">
-//                     <Button size="sm" onClick={() => handlePrintEFIR(fir)}><Printer className="w-4 h-4 mr-1"/> Print</Button>
-//                     <Button size="sm" onClick={() => handleSendEmail(fir)}><Mail className="w-4 h-4 mr-1"/> Email</Button>
-//                     <Button size="sm" onClick={() => handleDownloadPDF(fir)}><Download className="w-4 h-4 mr-1"/> PDF</Button>
-//                   </div>
-//                 </div>
-//               ))}
-//             </div>
-//           ) : (
-//             <p className="text-muted-foreground">No FIRs generated yet.</p>
-//           )}
-//         </CardContent>
-//       </Card>
-//     </div>
-//   );
-// };
-
-// export default EFIR;
-
 
 import React, { useState, useEffect } from "react";
 import { useAuthorityData } from "@/context/AuthorityDataContext";
@@ -237,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Mail, Printer, Download } from "lucide-react";
 import jsPDF from "jspdf";
 import { io, Socket } from "socket.io-client";
+import { useLocation } from "react-router-dom";
 interface TouristLocation {
   id: string;
   latitude: number;
@@ -304,6 +78,9 @@ const EFIR: React.FC = () => {
 
 const [processedIds, setProcessedIds] = useState<Set<string>>(new Set());
   const touristArray = Object.values(tourists); // Convert object to array
+const location = useLocation();
+  const incident = location.state?.incident;
+console.log(incident);
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -357,47 +134,6 @@ const [manualFIR, setManualFIR] = useState<Partial<EFIR & {
   description: "",
 });
 
-
-// useEffect(() => {
-//   const SOCKET_URL = import.meta.env.VITE_AUTHORITY_SOCKET_URL || "http://localhost:3000";
-//   const socket: Socket = io(SOCKET_URL, { transports: ["websocket", "polling"], reconnection: true });
-
-//   // ------------------- Tourist Events -------------------
-//   socket.on("receive-location", (raw: any) => {
-//     const data: TouristLocation = {
-//       id: raw.socketId || raw.id || raw.tid,
-//       latitude: raw.latitude ?? raw.lat,
-//       longitude: raw.longitude ?? raw.lng,
-//       name: raw.name,
-//       phone: raw.phone,
-//       email: raw.email,
-//       nationality: raw.nationality,
-//       destination: raw.destination,
-//       status: raw.status,
-//       tripStart: raw.tripStart,
-//       tripEnd: raw.tripEnd,
-//       timestamp: raw.timestamp || Date.now(),
-//       personalId: raw.personalId,
-//     };
-//     if (!data.id || !data.latitude || !data.longitude) return;
-//     addOrUpdateTourist(data);
-//   });
-
-//   socket.on("user-disconnected", removeTourist);
-
-//   // ------------------- Incident Events -------------------
-//   socket.on("incident-new", (inc: Incident) => {
-//     handleIncidentFIR(inc);
-//   });
-//   socket.on("incident-list", (list: Incident[]) => {
-//     list.forEach(inc => handleIncidentFIR(inc));
-//   });
-//   socket.on("incident-updated", (inc: Incident) => {
-//     setEfirs(prev => prev.map(f => (f.id === inc.id ? { ...f, status: inc.status || f.status } : f)));
-//   });
-
-//   return () => socket.disconnect();
-// }, []);
 
 
 useEffect(() => {
@@ -513,21 +249,24 @@ const removeTourist = (id: string) => {
   }, [demoAlerts, demoTourists, efirs]);
 
 
-const handleIncidentFIR = (incident: Incident) => {
+const handleIncidentFIR = (incident:any) => {
   // Avoid duplicate FIR for same incident
-  const exists = efirs.some(f => f.touristId === incident.touristId && f.zoneId === incident.zoneId);
+  const exists = efirs.some(f => f.touristId === incident.touristId );
   if (exists) return;
 
   const tourist = Object.values(tourists).find(t => t.id === incident.touristId);
   console.log(tourist);
   const newEFIR: EFIR = {
     id: crypto.randomUUID(),
-    zoneId: incident.zoneId || "",
-    zoneName: incident.zoneName || "",
+   // zoneId: incident.zoneId || "",
+   // zoneName: incident.zoneName || "",
+    placeName: incident.placeName || "",
     touristId: tourist?.id || incident.touristId,
     touristName: tourist?.name || incident.touristName,
     email: tourist?.email,
     mobile: tourist?.phone || incident.touristPhone,
+    lat:incident.location.lat,
+    lng:incident.location.lng,
     nationality: tourist?.nationality,
     description: incident.description || `Automatic FIR generated for incident ${incident.type || "unknown"}`,
     timestamp: new Date().toISOString(),
@@ -618,11 +357,11 @@ FIR No: ${fir.id}
 Tourist: ${fir.touristName} (${fir.touristId})
 Email: ${fir.email || "N/A"}
 Mobile: ${fir.mobile || "N/A"}
-Zone: ${fir.zoneName} (${fir.zoneId})
-Location: ${fir.latitude || "N/A"}, ${fir.longitude || "N/A"}
+Place Name : ${fir.placeName} (${fir.zoneId})
+Location: ${fir.lat || "N/A"}, ${fir.lng|| "N/A"}
 District: ${fir.district || "N/A"}
 Police Station: ${fir.policeStation || "N/A"}
-Nearest Landmark: ${fir.landmark || "N/A"}
+Nearest Landmark: ${fir.placeName || "N/A"}
 
 Description:
 ${fir.description || "N/A"}
@@ -685,11 +424,13 @@ doc.text(`Nearest Landmark: ${fir.landmark || "____________________"}`, 14, 62);
   doc.text("1. Place of Occurrence", 14, y);
   doc.setFont("Helvetica", "normal");
   y += 8;
+  doc.text(`Place Name: ${fir.placeName}`, 14, y);
+  y +=8;
   doc.text(`Zone Name: ${fir.zoneName}`, 14, y);
   y += 8;
   doc.text(`Zone Type / ID: ${fir.zoneId}`, 14, y);
   y += 8;
-  doc.text(`Coordinates: ${fir.latitude || "N/A"}, ${fir.longitude || "N/A"}`, 14, y);
+  doc.text(`Coordinates: ${fir.lat || "N/A"}, ${fir.lng|| "N/A"}`, 14, y);
   y += 8;
   doc.text("Nearest Landmark: ____________________________", 14, y);
 
@@ -705,7 +446,7 @@ doc.text(`Nearest Landmark: ${fir.landmark || "____________________"}`, 14, 62);
   y += 8;
   doc.text(`Email: ${fir.email || "N/A"}`, 14, y);
   y += 8;
-  doc.text(`Mobile: ${fir.mobile || "N/A"}`, 14, y);
+  doc.text(`Mobile: ${fir.touristPhone || fir.mobile || "N/A"}`, 14, y);
   y += 8;
   doc.text(`Nationality: ${fir.nationality || "N/A"}`, 14, y);
 
@@ -767,10 +508,10 @@ doc.text(`Nearest Landmark: ${fir.landmark || "____________________"}`, 14, 62);
   const generateEFIRContent = (fir: EFIR) => `
     <h2 style="text-align:center">E-FIR (Electronic First Information Report)</h2>
     <p><strong>FIR ID:</strong> ${fir.id}</p>
-    <p><strong>Zone:</strong> ${fir.zoneName}</p>
+    <p><strong>place Name:</strong> ${fir.placeName || fir.zoneName}</p>
     <p><strong>Tourist Name:</strong> ${fir.touristName || "N/A"}</p>
     <p><strong>Email:</strong> ${fir.email || "N/A"}</p>
-    <p><strong>Mobile:</strong> ${fir.mobile || "N/A"}</p>
+    <p><strong>Mobile:</strong> ${fir.touristPhone|| fir.mobile || "N/A"}</p>
     <p><strong>Nationality:</strong> ${fir.nationality || "N/A"}</p>
     <p><strong>Description:</strong> ${fir.description}</p>
     <p><strong>Date/Time:</strong> ${new Date(fir.timestamp).toLocaleString()}</p>
@@ -778,6 +519,15 @@ doc.text(`Nearest Landmark: ${fir.landmark || "____________________"}`, 14, 62);
     <hr/>
     <p style="text-align:center;">Generated electronically under Indian Tourism Department guidelines.</p>
   `;
+// useEffect(() => {
+//     handleIncidentFIR(incident);
+//   }, [incident]);
+
+useEffect(() => {
+  if (incident) {
+    handleIncidentFIR(incident);
+  }
+}, [incident]);
 
   return (
     <div className="space-y-6">
@@ -886,13 +636,15 @@ doc.text(`Nearest Landmark: ${fir.landmark || "____________________"}`, 14, 62);
               {efirs.map(fir => (
                 <div key={fir.id} className="p-3 border rounded-lg">
                   <p><strong>ID:</strong> {fir.id}</p>
-                  <p><strong>Zone:</strong> {fir.zoneName}</p>
+                  <p><strong>Zone:</strong> {fir.zoneName || fir.placeName}</p>
                   <p><strong>Tourist:</strong> {fir.touristName || "N/A"}</p>
+                  <p><strong>Tourist Id:</strong> {fir.touristId|| "N/A"}</p>
+                  <p><strong>Tourist Number:</strong> {fir.mobile|| "N/A"}</p>
                   <p><strong>Description:</strong> {fir.description}</p>
                   <p><strong>Date/Time:</strong> {new Date(fir.timestamp).toLocaleString()}</p>
                   <div className="flex gap-2 mt-2">
                     <Button size="sm" onClick={() => handlePrintEFIR(fir)}><Printer className="w-4 h-4 mr-1"/> Print</Button>
-                   <Button onClick={() => handleShareFIR(fir)}>Share FIR</Button>
+                  <Button onClick={() => handleShareFIR(fir)}>Share FIR</Button>
 
                     <Button size="sm" onClick={() => handleDownloadPDF(fir)}><Download className="w-4 h-4 mr-1"/> PDF</Button>
                   </div>
@@ -909,3 +661,102 @@ doc.text(`Nearest Landmark: ${fir.landmark || "____________________"}`, 14, 62);
 };
 
 export default EFIR;
+
+
+
+
+
+// import React, { useState, useEffect } from "react";
+// import { useLocation } from "react-router-dom";
+// import { useAuthorityData } from "@/context/AuthorityDataContext";
+// import { jsPDF } from "jspdf";
+
+// interface EFIR {
+//   id: string;
+//   zoneId?: string;
+//   zoneName?: string;
+//   touristId?: string;
+//   touristName?: string;
+//   email?: string;
+//   mobile?: string;
+//   nationality?: string;
+//   description: string;
+//   timestamp: string;
+//   status: "pending" | "submitted" | "resolved";
+// }
+
+// const EFIR = () => {
+//   const location = useLocation();
+//   const incident = location.state?.incident || null; // fallback to null
+//   const { tourists = {} } = useAuthorityData();
+//   const [efirs, setEfirs] = useState<EFIR[]>([]);
+// console.log(incident);
+//   // If incident is missing
+//   if (!incident) return <p>No incident selected. Please navigate from the Incidents page.</p>;
+
+//   const handleIncidentFIR = (incident: any) => {
+//     const exists = efirs.some(
+//       f => f.touristId === incident.touristId && f.zoneId === incident.zoneId
+//     );
+//     if (exists) return;
+
+//     const tourist = Object.values(tourists).find(t => t.id === incident.touristId);
+
+//     const newEFIR: EFIR = {
+//       id: crypto.randomUUID(),
+//       zoneId: incident.zoneId || "",
+//       zoneName: incident.zoneName || "",
+//       touristId: tourist?.id || incident.touristId,
+//       touristName: tourist?.name || incident.touristName || "Unknown Tourist",
+//       email: tourist?.email,
+//       mobile: tourist?.phone || incident.touristPhone,
+//       nationality: tourist?.nationality,
+//       description:
+//         incident.description ||
+//         `Automatic FIR generated for incident ${incident.type || "unknown"}`,
+//       timestamp: new Date().toISOString(),
+//       status: "pending",
+//     };
+
+//     setEfirs(prev => [newEFIR, ...prev]);
+//     handleDownloadPDF(newEFIR);
+//   };
+// const handleDownloadPDF = (fir: EFIR) => {
+//   const doc = new jsPDF(); // ✅ now works
+//   doc.setFontSize(16);
+//   doc.text("FIRST INFORMATION REPORT (F.I.R.)", 105, 20, { align: "center" });
+//   doc.setFontSize(12);
+//   doc.text(`Zone: ${fir.zoneName}`, 14, 40);
+//   doc.text(`Tourist: ${fir.touristName}`, 14, 48);
+//   doc.text(`Email: ${fir.email || "N/A"}`, 14, 56);
+//   doc.text(`Mobile: ${fir.mobile || "N/A"}`, 14, 64);
+//   doc.text(`Description: ${fir.description}`, 14, 72);
+//   doc.save(`EFIR_${fir.id}.pdf`);
+// };
+
+  
+
+//   useEffect(() => {
+//     handleIncidentFIR(incident);
+//   }, [incident]);
+
+//   return (
+//     <div>
+//       <h2>E-FIR for {incident?.touristName || "Unknown Tourist"}</h2>
+//       <p>Incident ID: {incident?.id || "N/A"}</p>
+
+//       <div>
+//         {efirs.map(fir => (
+//           <div key={fir.id} className="border p-2 my-2">
+//             <p><b>Tourist:</b> {fir.touristName}</p>
+//             <p><b>Description:</b> {fir.description}</p>
+//             <p><b>Status:</b> {fir.status}</p>
+//             <button onClick={() => handleDownloadPDF(fir)}>Download PDF</button>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default EFIR;

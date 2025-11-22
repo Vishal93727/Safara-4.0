@@ -1,20 +1,40 @@
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
 import helmet from 'helmet';
 import compression from 'compression';
 import pinoHttp from 'pino-http';
-import { env } from './config/env.js';
+import { env } from './config/env';
 import { router as api } from './routes/index.js';
+import authRoutes from './routes/auths.routes';
+ import uploadRoutes from './routes/upload.routes';
+import { errorHandler } from './middlewares/errorHandler';
+
+import { fileURLToPath } from 'url';
+import path from 'path';
+
 
 export const buildApp = () => {
   const app = express();
   app.set('trust proxy', true);
-  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+ // app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+  app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
+ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+ const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
   app.use(helmet());
   app.use(compression());
-  app.use(express.json());
-
+  //app.use(express.json());
+ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+  app.use('/api/v1/auths', authRoutes);
+  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+  app.use('/api/v1/upload', uploadRoutes);
   app.use('/api', api);
 
   // ... previous middleware and routes
@@ -29,6 +49,6 @@ app.use((err: any, _req: any, res: any, _next: any) => {
   res.status(status).json({ error: message });
 });
 
-  
+  app.use(errorHandler);
   return app;
 };
